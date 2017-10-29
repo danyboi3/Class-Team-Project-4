@@ -1,0 +1,18 @@
+Button, TextField {
+    -fx-background-color: lightsalmon;
+    -fx-border-color: aqua;
+}
+
+* {
+    -fx-border-color: pink;
+    -fx-border-width: 5;
+    -fx-border-style: dotted;
+}
+
+Text, Button, TextField {
+    -fx-font-family: "Comic Sans MS";
+}
+
+Text {
+    -fx-font-size: 16;
+}

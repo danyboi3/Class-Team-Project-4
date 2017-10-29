@@ -66,7 +66,8 @@ public class GameUI {
 		vboxMain.setPadding(new Insets(PADDING));
 		vboxMain.getChildren().addAll(hboxMain, hboxShooting);
 
-		Scene scene = new Scene(vboxMain, INIT_MAIN_SCENE_WIDTH, INIT_MAIN_SCENE_HEIGHT);
+		Scene scene = new Scene(vboxMain, INIT_MAIN_SCENE_WIDTH + 50, INIT_MAIN_SCENE_HEIGHT + 70);
+		scene.getStylesheets().add("style.css");
 		primaryStage.setTitle(APP_TITLE);
 		primaryStage.setScene(scene);
 	}
