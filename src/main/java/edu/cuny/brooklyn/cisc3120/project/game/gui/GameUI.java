@@ -19,7 +19,12 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class GameUI {
 	final static String APP_TITLE = "CISC 3120 Fall 2017: TargetGame";
@@ -29,6 +34,18 @@ public class GameUI {
 	private final static int INIT_TARGET_CANVAS_HEIGHT = 400;
 	private final static int INIT_MAIN_SCENE_WIDTH = 600;
 	private final static int INIT_MAIN_SCENE_HEIGHT = 500;
+	private final static int maxTries = 5;
+
+	private TextField xGuessedTextField;
+	private TextField yGuessedTextField;
+
+	private int tryCount = 0;
+
+	private int won = 0;
+	private int lost = 0;
+	private int totalTries = 0;
+	private int min = 0;
+	private int max = 0;
 
 	private Stage primaryStage;
 	private GameBoard gameBoard;
@@ -54,8 +71,10 @@ public class GameUI {
 		primaryStage.setScene(scene);
 	}
 
-	public void addTargetToUI(Target target) {
-		this.target = target;
+	public void addTargetToUI(Target target, boolean update) {
+		if (update) {
+			this.target = target;
+		}
 		double width = targetCanvas.getWidth();
 		double height = targetCanvas.getHeight();
 		double cellWidth = width / gameBoard.getWidth();
@@ -78,11 +97,11 @@ public class GameUI {
 	}
 
 	private HBox buildKeyboardInputBox() {
-		TextField xGuessedTextField = new TextField(Integer.toString((int) gameBoard.getWidth() / 2));
+		xGuessedTextField = new TextField(Integer.toString((int) gameBoard.getWidth() / 2));
 		xGuessedTextField.setOnMouseClicked((MouseEvent e) -> {
 			xGuessedTextField.selectAll();
 		});
-		TextField yGuessedTextField = new TextField(Integer.toString((int) gameBoard.getHeight() / 2));
+		yGuessedTextField = new TextField(Integer.toString((int) gameBoard.getHeight() / 2));
 		yGuessedTextField.setOnMouseClicked((MouseEvent e) -> {
 			yGuessedTextField.selectAll();
 		});
@@ -106,9 +125,92 @@ public class GameUI {
 
 	private VBox buildSideBar() {
 		VBox vboxSideBar = new VBox();
-		// StackPane shootingPane = buildShootingPane();
-		// VBox vboxStatistics = buildStatisticsBox();
+		StackPane shootingPane = buildShootingPane();
+		StackPane vboxStatistics = buildStatisticsBox();
+
+		vboxSideBar.getChildren().addAll(shootingPane, vboxStatistics);
+
+		vboxSideBar.setPadding(new Insets(0, 0, 0, 15));
+
 		return vboxSideBar;
+	}
+
+	private StackPane buildStatisticsBox() {
+		StackPane parent = new StackPane();
+		VBox statisticsBox = new VBox();
+
+		Text title = new Text("Game Statistics");
+		title.setTextAlignment(TextAlignment.CENTER);
+
+		Text stats = new Text();
+
+		Timer timer = new Timer();
+		timer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {
+				String rounded = "";
+
+				if (won + lost != 0) {
+					double average = ((double) totalTries / (won + lost));
+
+					rounded = String.format("%.2f", average);
+				}
+
+				stats.setText("\n\nWon: " + won + "\nLost: " + lost + "\nAverage: " + rounded + "\nBest: " + (min == 0 ? "" : min) + "\nWorst: " + (max == 0 ? "" : max));
+			}
+		}, 0, 100);
+
+		statisticsBox.getChildren().addAll(title, stats);
+
+		parent.getChildren().addAll(statisticsBox);
+
+		parent.setPadding(new Insets(15, 0, 0, 0));
+		parent.setMinHeight(250);
+
+		statisticsBox.setBackground(new Background(new BackgroundFill(Color.WHITE,
+				CornerRadii.EMPTY, Insets.EMPTY)));
+
+		return parent;
+	}
+
+	private StackPane buildShootingPane() {
+		StackPane shootingPane = new StackPane();
+
+		Canvas canvas = new Canvas(150, 150);
+
+		canvas.setStyle("");
+
+		canvas.setOnMouseMoved(event -> {
+			GraphicsContext context = canvas.getGraphicsContext2D();
+
+			context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+
+			context.beginPath();
+			context.moveTo(0, event.getY());
+			context.lineTo(150, event.getY());
+			context.stroke();
+			context.beginPath();
+			context.moveTo(event.getX(), 0);
+			context.lineTo(event.getX(), 150);
+			context.stroke();
+		});
+
+		canvas.setOnMouseClicked(event -> {
+			int x = (int) Math.round(event.getX() / 150 * 40);
+			int y = (int) Math.round(event.getY() / 150 * 40);
+
+			xGuessedTextField.setText(Integer.toString(x));
+			yGuessedTextField.setText(Integer.toString(y));
+
+			handleShotAction(target, new Shot(x, y));
+		});
+
+		shootingPane.getChildren().add(canvas);
+
+		shootingPane.setBackground(new Background(new BackgroundFill(Color.WHITE,
+				CornerRadii.EMPTY, Insets.EMPTY)));
+
+		return shootingPane;
 	}
 
 	private HBox buildMainBox() {
@@ -127,34 +229,59 @@ public class GameUI {
 		return hbox;
 	}
 
-	private void clearTarget() {
-		double width = targetCanvas.getWidth();
-		double height = targetCanvas.getHeight();
-		double cellWidth = width / gameBoard.getWidth();
-		double cellHeight = height / gameBoard.getHeight();
-		double xPos = cellWidth * target.getX();
-		double yPos = cellHeight * target.getY();
-
+	private void reset() {
 		GraphicsContext gc = targetCanvas.getGraphicsContext2D();
-		gc.clearRect(xPos, yPos, cellWidth, cellHeight);
-
+		gc.clearRect(0, 0, 400, 400);
 	}
 
 	private void handleShotAction(Target target, Shot shot) {
+		++tryCount;
+
 		if (target.isTargetShot(shot)) {
 			Alert alert = new Alert(AlertType.INFORMATION, "You shot the target!", ButtonType.CLOSE);
 			alert.setTitle(APP_TITLE + ":Target Shot");
 			alert.setHeaderText("Shot!");
 			alert.showAndWait();
-			clearTarget();
+			reset();
 			if (postShotAction != null) {
 				postShotAction.postAction();
 			}
+			totalTries += tryCount;
+			++won;
+
+			if (min == 0 || min > tryCount) {
+				min = tryCount;
+			}
+
+			if (max == 0 || max < tryCount) {
+				max = tryCount;
+			}
+
+			tryCount = 0;
+			return;
 		} else {
 			Alert alert = new Alert(AlertType.INFORMATION, "Missed!", ButtonType.CLOSE);
 			alert.setTitle(APP_TITLE + ":Target Missed");
 			alert.setHeaderText("You missed the target!");
 			alert.showAndWait();
+
+			Target shotTarget = new Target(shot.getX(), shot.getY());
+			shotTarget.setColor(Color.BLACK);
+			addTargetToUI(shotTarget, false);
+		}
+
+		if (tryCount == maxTries) {
+			Alert alert = new Alert(AlertType.INFORMATION, "You lost!", ButtonType.CLOSE);
+			alert.setTitle(APP_TITLE + ":Game over");
+			alert.setHeaderText("Game Over!");
+			alert.showAndWait();
+			reset();
+			if (postShotAction != null) {
+				postShotAction.postAction();
+			}
+			totalTries += tryCount;
+			tryCount = 0;
+			++lost;
 		}
 	}
 }

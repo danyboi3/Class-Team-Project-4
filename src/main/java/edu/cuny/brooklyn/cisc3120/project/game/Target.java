@@ -25,11 +25,11 @@ public class Target {
 		return color;
 	}
 
+	public void setColor(Color color) {
+		this.color = color;
+	}
+
 	public boolean isTargetShot(Shot shot) {
-		if (x == shot.getX() && y == shot.getY()) {
-			return true;
-		} else {
-			return false;
-		}
+		return x == shot.getX() && y == shot.getY();
 	}
 }

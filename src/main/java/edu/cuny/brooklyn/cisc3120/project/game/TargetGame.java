@@ -26,16 +26,14 @@ public class TargetGame {
 
 	public void play() {
 		setNewTarget();
-		gameUI.setPostShotActionHandler(() -> {
-			setNewTarget();
-		});
+		gameUI.setPostShotActionHandler(this::setNewTarget);
 		gameUI.show();
 	}
 
 	private void setNewTarget() {
 		target = getRandomTarget();
 		addTargetToBoard(target);
-		gameUI.addTargetToUI(target);
+		gameUI.addTargetToUI(target, true);
 	}
 
 	private Target getRandomTarget() {
