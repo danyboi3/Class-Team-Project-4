@@ -27,7 +27,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class GameUI {
-	final static String APP_TITLE = "CISC 3120 Fall 2017: TargetGame";
+	final static String APP_TITLE = "CISC 3120 Fall 2017: TargetGame By TeamOPS!";
 
 	private final static int PADDING = 20;
 	private final static int INIT_TARGET_CANVAS_WIDTH = 400;
